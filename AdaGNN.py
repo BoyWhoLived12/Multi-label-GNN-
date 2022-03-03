@@ -28,7 +28,7 @@ class AdagnnWith(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
     
-    def forword(self, input, adj):
+    def forward(self, input, adj):
         e1 = torch.matmul(adj, input)
         alpha = torch.diag(self.learnable_diag_1)
         e2 = torch.matmul(e1, alpha + torch.eye(self.in_features, self.in_features).cuda())

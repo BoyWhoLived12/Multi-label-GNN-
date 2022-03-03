@@ -23,7 +23,7 @@ class GNNResnet(nn.Module):
             model.layer4,
         )
         self.num_classes = num_classes
-        self.pooling = nn.MaxPool2d(14, 14)
+        self.pooling = nn.MaxPool2d(7, 7)
 
         self.ada = Adagnn(in_channel, 1024, 2048, )
 
