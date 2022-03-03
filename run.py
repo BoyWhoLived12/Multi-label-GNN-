@@ -1,5 +1,11 @@
 # Not made for now. 
 import argparse
+from engine import *
+from model import *
+from coco import *
+from util import *
+import torch
+import torchvision
 
 
 parser = argparse.ArgumentParser(description='WILDCAT Training')
@@ -38,3 +44,38 @@ parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
 args = parser.parse_args()
 print("Hello World")
 print(args)
+
+
+def main_coco():
+    global args, best_prec1, use_gpu
+    # args = parser.parse_args()
+    root = ''
+    use_gpu = torch.cuda.is_available()
+
+    train_dataset = COCO2014(root, phase='val', inp_name='/content/drive/MyDrive/GCN/coco_glove_word2vec (1).pkl')
+    val_dataset = COCO2014(root, phase='val', inp_name='/content/drive/MyDrive/GCN/coco_glove_word2vec (1).pkl')
+    num_classes = 80
+    ml = torchvision.models.resnet50(pretrained=True)
+    model = GNNResnet(ml, num_classes=num_classes, t=0.4, adj_file='/content/drive/MyDrive/GCN/coco_adj.pkl')
+
+    # define loss function (criterion)
+    criterion = nn.MultiLabelSoftMarginLoss()
+
+    # define optimizer
+    optimizer = torch.optim.SGD(model.get_config_optim(0.1, 0.1),
+                                lr=0.1,
+                                momentum=0.9,
+                                weight_decay=1e-4)
+
+    state = {'batch_size': 32, 'image_size': 224, 'max_epochs': 20,
+             'evaluate': False, 'resume': None, 'num_classes':num_classes}
+    state['difficult_examples'] = True
+    state['save_model_path'] = 'checkpoint/coco/'
+    state['workers'] = 1
+    state['epoch_step'] = [30]
+    state['lr'] = 0.1
+    state['d_ids'] = [0]
+    # if True:
+    #     state['evaluate'] = True
+    engine = GCNMultiLabelMAPEngine(state)
+    engine.learning(model, criterion, train_dataset, val_dataset, optimizer)
